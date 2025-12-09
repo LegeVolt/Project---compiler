@@ -1,32 +1,36 @@
-# Simple Docker Compilation Environment
+# Ubuntu Dev Container (macOS + Docker)
 
-This folder contains a minimal Docker-based Ubuntu environment for running Python scripts and compiling C/C++ code.
+Run an Ubuntu shell on macOS using Docker. Works for quick Python runs and C/C++ builds.
 
-Use this when you want a clean Linux setup without installing compilers directly on your Mac.
+## 1) First-time setup
+- Install Docker Desktop for Mac and start it.
+- From this folder, build the image:
+  ```bash
+  docker build -t compilation-ubuntu .
+  ```
+- Launch the container the first time (bind-mounts this folder into `/workspace`):
+  ```bash
+  docker run -it --name compilation-dev -v "$(pwd)":/workspace compilation-ubuntu
+  ```
 
----
-
-## How to Build the Docker Image
-
-Run this inside the folder that contains the Dockerfile:
-
+## 2) Start it again later
+Reuse the same container (keeps your shell history and packages added inside it):
 ```bash
-docker build -t compilation-ubuntu .
-
-How to Start the Container
-
-This command opens an Ubuntu shell and mounts your Mac folder into /workspace:
-
-
-docker run -it --name compilation-dev -v "$(pwd)":/workspace compilation-ubuntu
-
-Inside the container, you will see your files under:
-/workspace
-
-
-How to Enter the Container Again Later
-
-No need to rebuild or re-run the full command.
-
-Just run:
 docker start -ai compilation-dev
+```
+
+## 3) Run code inside Ubuntu
+Inside the container shell:
+- Python: `python3 test.py`
+- C: `gcc -o app main.c && ./app`
+- C++: `g++ -std=c++17 -o app main.cpp && ./app`
+Your macOS files stay in `/workspace`.
+
+## 4) Reset (fresh container)
+If the container breaks or you want a clean slate:
+```bash
+docker stop compilation-dev  # if running
+docker rm compilation-dev
+docker rmi compilation-ubuntu  # optional: rebuild next time
+```
+Then repeat the first-time setup. Files in your project folder remain on macOS. 
