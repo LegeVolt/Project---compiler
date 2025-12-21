@@ -1,0 +1,23 @@
+def reduce(int n,a,b):
+<
+    int x = n.
+    string b= "yossi".
+
+    if x > 0 :
+    <
+        while x > 1 :
+        <
+            if x / 2 == 0 :
+            <
+                x = x / 2.
+            >
+            else : x = x - 1.
+        >
+    >
+>
+
+def main():
+<
+    int value = 6.
+    reduce(value, 1,2).
+>

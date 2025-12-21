@@ -30,7 +30,8 @@ void printtree(node *tree, int indent);
 
 %type <n> program func_list func args arg_decl_list param_decl type id_list
 %type <n> opt_ret_type return_type body stmt_list stmt if_stmt assign_stmt return_stmt
-%type <n> expr pass_stmt while_stmt block suite
+%type <n> expr pass_stmt while_stmt block suite decl_stmt expr_stmt
+%type <n> call opt_arg_expr_list arg_expr_list primary
 %type <n> elif_tail
 
 %token <sval> STRING ID
@@ -42,9 +43,13 @@ void printtree(node *tree, int indent);
 %token DOT SEMI COMMA LPAREN RPAREN LBRACK RBRACK ARROW COLON
 %token TRUE FALSE
 
+%left OR
+%left AND
+%nonassoc EQ NEQ GEQ LEQ GREATER LESS
 %left PLUS MINUS
 %left MUL DIV
 %right POW
+%right NOT
 
 %nonassoc LOWER_THAN_ELSE   /* lowest, for dangling-else reduce */
 %nonassoc ELIF             /* prefer shift on ELIF over reduce */
@@ -173,9 +178,11 @@ stmt_list
 stmt
     : if_stmt
     | assign_stmt
+    | decl_stmt
     | return_stmt
     | pass_stmt
     | while_stmt
+    | expr_stmt
     ;
 
 /* ===== IF / ELIF / ELSE (כמו במצגות) ===== */
@@ -229,6 +236,21 @@ assign_stmt
       }
     ;
 
+decl_stmt
+    : type ID ASSIGN expr DOT
+      {
+          node *id = mk_leaf($2);
+          $1->left = id;
+          id->right = $4;
+          $$ = mknode("DECL", $1, NULL);
+      }
+    ;
+
+expr_stmt
+    : call DOT
+      { $$ = $1; }
+    ;
+
 return_stmt
     : RETURN expr DOT
       { $$ = mknode("RET", $2, NULL); }
@@ -250,17 +272,58 @@ while_stmt
     ;
 
 expr
-    : expr PLUS expr  { node *n = mknode("+", $1, NULL); $1->right = $3; $$ = n; }
+    : expr OR expr    { node *n = mknode("OR", $1, NULL); $1->right = $3; $$ = n; }
+    | expr AND expr   { node *n = mknode("AND", $1, NULL); $1->right = $3; $$ = n; }
+    | expr EQ expr    { node *n = mknode("==", $1, NULL); $1->right = $3; $$ = n; }
+    | expr NEQ expr   { node *n = mknode("!=", $1, NULL); $1->right = $3; $$ = n; }
+    | expr GEQ expr   { node *n = mknode(">=", $1, NULL); $1->right = $3; $$ = n; }
+    | expr LEQ expr   { node *n = mknode("<=", $1, NULL); $1->right = $3; $$ = n; }
+    | expr GREATER expr { node *n = mknode(">", $1, NULL); $1->right = $3; $$ = n; }
+    | expr LESS expr  { node *n = mknode("<", $1, NULL); $1->right = $3; $$ = n; }
+    | expr PLUS expr  { node *n = mknode("+", $1, NULL); $1->right = $3; $$ = n; }
     | expr MINUS expr { node *n = mknode("-", $1, NULL); $1->right = $3; $$ = n; }
     | expr MUL expr   { node *n = mknode("*", $1, NULL); $1->right = $3; $$ = n; }
     | expr DIV expr   { node *n = mknode("/", $1, NULL); $1->right = $3; $$ = n; }
-    | INT             { $$ = int_node($1); }
+    | expr POW expr   { node *n = mknode("**", $1, NULL); $1->right = $3; $$ = n; }
+    | NOT expr %prec NOT { node *n = mknode("NOT", $2, NULL); $$ = n; }
+    | primary         { $$ = $1; }
+    ;
+
+primary
+    : INT             { $$ = int_node($1); }
     | FLOAT           { $$ = float_node($1); }
     | ID              { $$ = mk_leaf($1); }
     | STRING          { $$ = mk_leaf($1); }
     | TRUE            { $$ = mknode("True", NULL, NULL); }
     | FALSE           { $$ = mknode("False", NULL, NULL); }
     | LPAREN expr RPAREN { $$ = $2; }
+    | call            { $$ = $1; }
+    ;
+
+call
+    : ID LPAREN opt_arg_expr_list RPAREN
+      {
+          node *func_name = mk_leaf($1);
+          node *args = $3;
+          func_name->right = args;
+          $$ = mknode("CALL", func_name, NULL);
+      }
+    ;
+
+opt_arg_expr_list
+    : /* empty */
+      { $$ = mknode("ARGS", mknode("NONE", NULL, NULL), NULL); }
+    | arg_expr_list
+      { $$ = mknode("ARGS", $1, NULL); }
+    ;
+
+arg_expr_list
+    : expr { $$ = $1; }
+    | expr COMMA arg_expr_list
+      {
+          $1->right = $3;
+          $$ = $1;
+      }
     ;
 
 %%

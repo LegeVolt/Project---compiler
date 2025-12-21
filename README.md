@@ -2,6 +2,12 @@
 
 Run an Ubuntu shell on macOS using Docker. Works for quick Python runs and C/C++ builds.
 
+## 0) Clone the repo
+```bash
+git clone <your-repo-url>
+cd Project---compiler
+```
+
 ## 1) First-time setup
 - Install Docker Desktop for Mac and start it.
 - From this folder, build the image:
@@ -25,6 +31,27 @@ Inside the container shell:
 - C: `gcc -o app main.c && ./app`
 - C++: `g++ -std=c++17 -o app main.cpp && ./app`
 Your macOS files stay in `/workspace`.
+
+### Build and run the compiler (inside the container)
+```bash
+cd /workspace/Project
+bison -d -o proj.tab.c proj.y
+flex -o lex.yy.c proj.l
+gcc -o proj lex.yy.c proj.tab.c -lfl
+./proj < sample.txt
+./proj < test.txt
+```
+
+## Native macOS build (no Docker)
+```bash
+brew install flex bison
+cd Project
+bison -d -o proj.tab.c proj.y
+flex -o lex.yy.c proj.l
+gcc -o proj lex.yy.c proj.tab.c -ll
+./proj < sample.txt
+./proj < test.txt
+```
 
 ## 4) Reset (fresh container)
 If the container breaks or you want a clean slate:
