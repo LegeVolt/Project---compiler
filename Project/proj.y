@@ -146,8 +146,10 @@ return_type
     ;
 
 body
-    : LESS stmt_list GREATER
-      { $$ = mknode("BODY", $2, NULL); }
+    : block
+      { $$ = mknode("BODY", $1->left, NULL); }
+    | stmt
+      { $$ = mknode("BODY", $1, NULL); }
     ;
 
 block
@@ -244,6 +246,11 @@ decl_stmt
           id->right = $4;
           $$ = mknode("DECL", $1, NULL);
       }
+    | type id_list DOT
+      {
+          $1->left = $2;
+          $$ = mknode("DECL", $1, NULL);
+      }
     ;
 
 expr_stmt
@@ -298,6 +305,12 @@ primary
     | FALSE           { $$ = mknode("False", NULL, NULL); }
     | LPAREN expr RPAREN { $$ = $2; }
     | call            { $$ = $1; }
+    | primary LBRACK expr RBRACK
+      {
+          node *base = $1;
+          base->right = $3;
+          $$ = mknode("INDEX", base, NULL);
+      }
     ;
 
 call

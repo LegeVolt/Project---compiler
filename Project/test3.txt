@@ -1,0 +1,42 @@
+def main():
+<
+    int x = 5.
+    if x > 0:
+    <
+        x = 1.
+    >
+    elif True:
+    <
+        if getTrue():
+            x = 0.
+        int temp = foo().
+    >
+    elif False:
+    <
+        if True:
+            x = 0.
+        int temp = foo().
+    >
+     else: <
+        x = 2.
+    >
+>
+def foo(int x, y; string z) -> int:
+<
+    int a ,mm.
+    if x ==1 : < return 0. >
+    string b= "yossi".
+    a = 1.
+    # this is a comment
+    string i = b[a]. #comment
+    while a<10 or True:
+    <
+        if a==5:
+            print(a).
+        a = a + 1.
+    >
+    a = foo(x,y,z).
+    # this is a comment
+    return a.
+>
+def getTrue() -> bool: return True.
