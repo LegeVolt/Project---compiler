@@ -12,6 +12,7 @@ typedef struct node {
     char *token;
     struct node *left;
     struct node *right;
+    int lineno;  /* Line number for error reporting */
 } node;
 
 node *mknode(char *token, node *left, node *right);
@@ -19,6 +20,10 @@ node *mk_leaf(char *token);
 node *int_node(int val);
 node *float_node(float val);
 void printtree(node *tree, int indent);
+
+/* Semantic analysis */
+int semantic_analysis(struct node *root);
+static node *ast_root = NULL;
 %}
 
 %union {
@@ -59,7 +64,13 @@ void printtree(node *tree, int indent);
 
 program
     : func_list
-      { $$ = mknode("CODE", $1, NULL); printtree($$, 0); }
+      { 
+          $$ = mknode("CODE", $1, NULL); 
+          ast_root = $$;
+          if (semantic_analysis($$) == 0) {
+              printtree($$, 0);
+          }
+      }
     ;
 
 func_list
@@ -242,8 +253,9 @@ decl_stmt
     : type ID ASSIGN expr DOT
       {
           node *id = mk_leaf($2);
+          node *init = mknode("INIT", $4, NULL);  /* Wrap initializer to distinguish from id_list */
           $1->left = id;
-          id->right = $4;
+          id->right = init;
           $$ = mknode("DECL", $1, NULL);
       }
     | type id_list DOT
@@ -357,23 +369,30 @@ node *mknode(char *token, node *left, node *right) {
     newnode->left = left;
     newnode->right = right;
     newnode->token = newstr;
+    newnode->lineno = lineno;
     return newnode;
 }
 
 node *mk_leaf(char *token) {
-    return mknode(token, NULL, NULL);
+    node *n = mknode(token, NULL, NULL);
+    n->lineno = lineno;
+    return n;
 }
 
 node *int_node(int val) {
     char buff[20];
     sprintf(buff, "%d", val);
-    return mknode(buff, NULL, NULL);
+    node *n = mknode(buff, NULL, NULL);
+    n->lineno = lineno;
+    return n;
 }
 
 node *float_node(float val) {
     char buff[30];
     sprintf(buff, "%.2f", val);
-    return mknode(buff, NULL, NULL);
+    node *n = mknode(buff, NULL, NULL);
+    n->lineno = lineno;
+    return n;
 }
 
 void printtree(node *tree, int indent) {
