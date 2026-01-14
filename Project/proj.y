@@ -23,6 +23,10 @@ void printtree(node *tree, int indent);
 
 /* Semantic analysis */
 int semantic_analysis(struct node *root);
+
+/* Code generation */
+void generate_code(struct node *root);
+
 static node *ast_root = NULL;
 %}
 
@@ -68,7 +72,7 @@ program
           $$ = mknode("CODE", $1, NULL); 
           ast_root = $$;
           if (semantic_analysis($$) == 0) {
-              printtree($$, 0);
+              generate_code($$);
           }
       }
     ;
